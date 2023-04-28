@@ -18,6 +18,20 @@ def closest_factors(n):
             return i, n // i
 
 
+def remove_outliers(data, m=3):
+    """
+    delete the outlier in the data
+    :param data: a list of data
+    :param m: the number of standard deviation away from the mean
+    :return: a list of data without outlier
+    """
+    data = np.array(data)
+    mean = np.mean(data)
+    std = np.std(data)
+    data = data[np.abs(data - mean) < m * std]
+    return data
+
+
 class GroupAnalysis:
 
     def __init__(self, group_dict, file_path, well_name='QCWell'):
@@ -26,9 +40,10 @@ class GroupAnalysis:
         self.well_name = well_name
         self.data_source = GetDataFromXML(self.file_path, self.well_name)
 
-    def one_group_aggregation(self, group_name, plot_param):
+    def one_group_aggregation(self, group_name, plot_param, remove_outlier=False):
         """
         aggregate the data from all wells in one group to a single list for each plot_param
+        :param remove_outlier: whether to remove the outlier, default is False
         :param group_name: name of the group, e.g. 'group1'
         :param plot_param: a list of plot parameters, e.g. ['MeanIntensity', 'Size']
         :return: a dictionary of aggregated data for each plot_param e.g. {'MeanIntensity': np.array(), 'Size': np.array()}
@@ -39,7 +54,10 @@ class GroupAnalysis:
             for param in plot_param:
                 aggregated_data[param] = np.array([])
                 for well in data:
-                    aggregated_data[param] = np.append(aggregated_data[param], data[well][param])
+                    preprocessed = data[well][param]
+                    if remove_outlier:
+                        preprocessed = remove_outliers(preprocessed)
+                    aggregated_data[param] = np.append(aggregated_data[param], preprocessed)
             return aggregated_data
         else:
             return 'Group name not found'

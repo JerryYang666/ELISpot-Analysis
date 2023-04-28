@@ -10,6 +10,7 @@ from GroupAnalysis import GroupAnalysis
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN, SpectralClustering, Birch, MeanShift
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 gp = GroupAnalysis({'Naive-IFNg': ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2'],
                     'CLP+HemeVehicle-IFNg': ['E1', 'E2', 'F1', 'F2', 'G1', 'G2', 'H1', 'H2', 'A3', 'A4'],
@@ -29,6 +30,7 @@ X = np.column_stack((clp_il7_ifng['Size'], clp_il7_ifng['MeanIntensity']))
 # Create a list of clustering algorithms to test
 clustering_algorithms = [
     KMeans(n_clusters=2),
+    DBSCAN(eps=30, min_samples=20),
     #AgglomerativeClustering(n_clusters=2),
     #DBSCAN(eps=0.3, min_samples=5),
     #SpectralClustering(n_clusters=2),
@@ -36,19 +38,27 @@ clustering_algorithms = [
     #MeanShift()
 ]
 
+scalers = [
+    StandardScaler(),
+    MinMaxScaler(),
+]
+
 # Fit each algorithm to the dataset and plot the results
-fig, axs = plt.subplots(1, len(clustering_algorithms), figsize=(8, 8))
+fig, axs = plt.subplots(1+len(scalers), len(clustering_algorithms), figsize=(8*len(clustering_algorithms), 8*(1+len(scalers))))
 
 for i, algorithm in enumerate(clustering_algorithms):
     algorithm.fit(X)
     labels = algorithm.labels_
-    axs.scatter(X[:, 0], X[:, 1], c=labels, s=5)
-    plt.xlabel('MeanIntensity')
-    plt.ylabel('Size')
-    axs.set_xscale('log')
-    axs.set_yscale('log')
-    axs.set_title(type(algorithm).__name__)
-    #axs[i].scatter(X[:, 0], X[:, 1], c=labels)
-    #axs[i].set_title(type(algorithm).__name__)
-
+    if len(clustering_algorithms) == 1:
+        axs.scatter(X[:, 0], X[:, 1], c=labels, s=5)
+        axs.set_title(type(algorithm).__name__)
+        axs.set_xscale('log')
+        axs.set_yscale('log')
+    else:
+        axs[i].scatter(X[:, 0], X[:, 1], c=labels, s=5)
+        axs[i].set_title(type(algorithm).__name__)
+        axs[i].set_xscale('log')
+        axs[i].set_yscale('log')
+plt.xlabel('MeanIntensity')
+plt.ylabel('Size')
 plt.show()

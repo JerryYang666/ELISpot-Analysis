@@ -25,17 +25,18 @@ gp = GroupAnalysis({'Naive-IFNg': ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2
                    'data/042221_CLP_IL7_heme_for_nanostring.xml')
 
 clp_il7_ifng = gp.one_group_aggregation('CLP+IL7-IFNg', ['Size', 'MeanIntensity'])
+clp_il7_ifng_no_outlier = gp.one_group_aggregation('CLP+IL7-IFNg', ['Size', 'MeanIntensity'], remove_outlier=True)
 X = np.column_stack((clp_il7_ifng['Size'], clp_il7_ifng['MeanIntensity']))
 
 # Create a list of clustering algorithms to test
 clustering_algorithms = [
     KMeans(n_clusters=2),
     DBSCAN(eps=30, min_samples=20),
-    #AgglomerativeClustering(n_clusters=2),
-    #DBSCAN(eps=0.3, min_samples=5),
-    #SpectralClustering(n_clusters=2),
-    #Birch(n_clusters=2),
-    #MeanShift()
+    # AgglomerativeClustering(n_clusters=2),
+    # DBSCAN(eps=0.3, min_samples=5),
+    # SpectralClustering(n_clusters=2),
+    # Birch(n_clusters=2),
+    # MeanShift()
 ]
 
 scalers = [
@@ -44,8 +45,23 @@ scalers = [
 ]
 
 # Fit each algorithm to the dataset and plot the results
-fig, axs = plt.subplots(1+len(scalers), len(clustering_algorithms), figsize=(8*len(clustering_algorithms), 8*(1+len(scalers))))
+fig, axs = plt.subplots(1 + len(scalers), len(clustering_algorithms),
+                        figsize=(8 * len(clustering_algorithms), 8 * (1 + len(scalers))))
 
+for i, scaler in enumerate(scalers):
+    X = scaler.fit_transform(X)
+    for j, algorithm in enumerate(clustering_algorithms):
+        algorithm.fit(X)
+        labels = algorithm.labels_
+        axs[i, j].scatter(X[:, 0], X[:, 1], c=labels, s=5)
+        axs[i, j].set_title(type(algorithm).__name__ + ' ' + type(scaler).__name__)
+        axs[i, j].set_xscale('log')
+        axs[i, j].set_yscale('log')
+        plt.xlabel('MeanIntensity')
+        plt.ylabel('Size')
+plt.show()
+
+'''
 for i, algorithm in enumerate(clustering_algorithms):
     algorithm.fit(X)
     labels = algorithm.labels_
@@ -59,6 +75,8 @@ for i, algorithm in enumerate(clustering_algorithms):
         axs[i].set_title(type(algorithm).__name__)
         axs[i].set_xscale('log')
         axs[i].set_yscale('log')
+        
 plt.xlabel('MeanIntensity')
 plt.ylabel('Size')
 plt.show()
+'''
